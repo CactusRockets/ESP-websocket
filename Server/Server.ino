@@ -4,11 +4,15 @@
 #include <AsyncTCP.h>
 #include <ArduinoJson.h>
 
-const char* ssid = "Daniel";
-const char* password = "senhadowifi";
+char* ssid = "Daniel";
+char* password = "senhadowifi";
 
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
+
+int value = 0;
+float latitude = -9.374167;
+float longitude = -40.497799;
 
 void onWsEvent(
   AsyncWebSocket *server, 
@@ -35,16 +39,27 @@ void setup() {
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
     Serial.println("Conectando ao WiFi...");
+
+    if(ssid == "Daniel") {
+      ssid == "PNZ_NET - DANIEL";
+      password = "principedapaz";
+    } else {
+      ssid = "Daniel";
+      password = "senhadowifi";
+    }
+
   }
-  Serial.println("Conectado ao WiFi");
+  Serial.print("Conectado ao WiFi: ");
+  Serial.println(ssid);
+
   Serial.print("IP address: ");
   Serial.println(WiFi.localIP());
 
-  if (!MDNS.begin("esp32")) {
-    Serial.println("Erro ao configurar mDNS");
-    return;
-  }
-  Serial.println("mDNS configurado como esp32.local");
+  // if (!MDNS.begin("esp32")) {
+  //   Serial.println("Erro ao configurar mDNS");
+  //   return;
+  // }
+  // Serial.println("mDNS configurado como esp32.local");
 
   ws.onEvent(onWsEvent);
   server.addHandler(&ws);
@@ -60,13 +75,36 @@ void setup() {
 void loop() {
   if (ws.count() > 0) {
     StaticJsonDocument<200> doc;
-    doc["sensor1"] = analogRead(34);
-    doc["sensor2"] = analogRead(35);
+
+    // Preencha as informações
+    doc["maximumAltitude"] = value + 1;
+    doc["altitude"] = value + 2;
+    doc["maximumVelocity"] = value + 3;
+    doc["velocity"] = value + 4;
+    doc["maximumAcceleration"] = value + 5;
+    doc["acceleration"] = value + 6;
+    doc["velocityX"] = value + 7;
+    doc["velocityY"] = value + 8;
+    doc["velocityZ"] = value + 9;
+    doc["accelerationX"] = value + 10;
+    doc["accelerationY"] = value + 11;
+    doc["accelerationZ"] = value + 12;
+    doc["latitude"] = latitude;
+    doc["longitude"] = longitude;
+
+    JsonObject skibs = doc.createNestedObject("skibs");
+    skibs["skib1"] = value % 2;
+    skibs["skib2"] = value % 3;
+
     String json;
     serializeJson(doc, json);
     ws.textAll(json);
     Serial.print("Enviando dados: ");
     Serial.println(json);
+
+    value++;
+    latitude = latitude + 0.0002;
+    longitude = longitude - 0.00004;
   }
   delay(500);
 }
